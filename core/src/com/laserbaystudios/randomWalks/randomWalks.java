@@ -1,29 +1,41 @@
 package com.laserbaystudios.randomWalks;
 
 import java.util.ArrayList;
-
 import java.util.Random;
 
 import com.badlogic.gdx.scenes.scene2d.ui.*;
-
 import com.badlogic.gdx.ApplicationAdapter;
+import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
 import com.badlogic.gdx.graphics.Camera;
 import com.badlogic.gdx.graphics.Color;
 import com.badlogic.gdx.graphics.GL20;
 import com.badlogic.gdx.graphics.OrthographicCamera;
+import com.badlogic.gdx.graphics.Texture;
+import com.badlogic.gdx.graphics.g2d.Sprite;
+import com.badlogic.gdx.graphics.g2d.SpriteBatch;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer;
 import com.badlogic.gdx.graphics.glutils.ShapeRenderer.ShapeType;
 import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.input.GestureDetector.GestureListener;
 import com.badlogic.gdx.math.Vector2;
 
-public class randomWalks extends ApplicationAdapter implements GestureListener {
+public class randomWalks extends ApplicationAdapter 
+	implements GestureListener, ApplicationListener {
 
 	
 	/*    UI ELEMENTS    */
-	Slider numWalkers;
 	
+	enum DrawStates {TITLE_SCREEN, OPTIONS_SCREEN, SIMULATION_SCREEN};
+	private DrawStates currentScreen;
+	
+	private Sprite splash;
+	private Texture splashTex;
+	private SpriteBatch spriteBatch;
+	
+	private Button startButton;
+
+	private Slider numWalkers;
 	
 	/*    SIMULATION ELEMENTS    */
 	Camera camera;
@@ -54,6 +66,8 @@ public class randomWalks extends ApplicationAdapter implements GestureListener {
 	int rightBound;
 	int bottomBound;
 	
+	boolean drawUpArrow;
+	
 	boolean playing;
 	
 	private class Walker
@@ -80,8 +94,16 @@ public class randomWalks extends ApplicationAdapter implements GestureListener {
 	
 	@Override
 	public void create () {
+
+		spriteBatch = new SpriteBatch();
+		splashTex = new Texture(Gdx.files.internal("splash.png"));
+		splash = new Sprite(splashTex);
+		
+		startButton = new Button();
+		currentScreen = DrawStates.TITLE_SCREEN;
 		
 		playing = false;
+		drawUpArrow = false;
 		
 		arenaHeight = Gdx.graphics.getHeight();
 		arenaWidth = Gdx.graphics.getWidth();
@@ -90,17 +112,25 @@ public class randomWalks extends ApplicationAdapter implements GestureListener {
 		rightBound = arenaWidth/2;
 		leftBound = -rightBound;
 		
+		camera = new OrthographicCamera(arenaWidth, arenaHeight);
+		
 		GestureDetector gd = new GestureDetector(this);
 		Gdx.input.setInputProcessor(gd);
 		
 		rand = new Random(System.currentTimeMillis());
 		
 		shapeRenderer = new ShapeRenderer();
-		camera = new OrthographicCamera(arenaWidth, arenaHeight);
 		
 		initializeSimulation();
 	}
 
+	@Override
+	public void dispose()
+	{
+		spriteBatch.dispose();
+		splashTex.dispose();
+	}
+	
 	private void initializeSimulation() {
 		succeptible = new ArrayList<Walker>();
 		infected = new ArrayList<Walker>();
@@ -120,19 +150,45 @@ public class randomWalks extends ApplicationAdapter implements GestureListener {
 
 	@Override
 	public void render () {
-		Gdx.gl.glClearColor(1, 1, 1, 1);
-		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
-
 		
 		camera.update();
 		shapeRenderer.setProjectionMatrix(camera.combined);
 		
-		shapeRenderer.begin(ShapeType.Line);
-		shapeRenderer.setColor(Color.GRAY);
-		shapeRenderer.line(-5, 0, 0, 10);
-		shapeRenderer.line(0, 10, 5, 0);
-		shapeRenderer.line(0, -10, 0, 10);
+		////////// Draw the title //////////////
 		
+		switch(currentScreen)
+		{
+		case TITLE_SCREEN:
+			drawTitleScreen();
+			break;
+		case SIMULATION_SCREEN:
+			drawSimulationScreen();
+			break;
+		case OPTIONS_SCREEN:
+			// TODO: WRITE THIS METHOD
+			break;
+		default:
+			break;
+		};
+		
+	}
+
+	private void drawSimulationScreen() {
+		////////// Draw the simulation ////////////
+		
+
+		Gdx.gl.glClearColor(1, 1, 1, 1);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+
+		shapeRenderer.begin(ShapeType.Line);
+		
+		if(drawUpArrow)
+		{
+			shapeRenderer.setColor(Color.GRAY);
+			shapeRenderer.line(-5, 0, 0, 10);
+			shapeRenderer.line(0, 10, 5, 0);
+			shapeRenderer.line(0, -10, 0, 10);
+		}
 		
 		shapeRenderer.setColor(SUCCEPTIBLE_COLOR);
 		for (Walker s : succeptible)
@@ -262,8 +318,25 @@ public class randomWalks extends ApplicationAdapter implements GestureListener {
 		}
 	}
 
+	private void drawTitleScreen() {
+		Gdx.gl.glClearColor(0,0,0,0);
+		Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
+		
+		spriteBatch.begin();
+		splash.setPosition((arenaWidth - splash.getWidth())/2,
+				(arenaHeight - splash.getHeight())/2);
+		splash.draw(spriteBatch);
+		spriteBatch.end();
+	}
+
 	@Override
 	public boolean touchDown(float x, float y, int pointer, int button) {
+		
+		if(currentScreen == DrawStates.TITLE_SCREEN)
+		{
+			currentScreen = DrawStates.SIMULATION_SCREEN;
+			return false;
+		}
 		
 		if((infected.size() == 0  ||  succeptible.size() == 0))
 		{
