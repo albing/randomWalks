@@ -20,9 +20,9 @@ public class randomWalks extends ApplicationAdapter
 
 		GestureDetector gd = new GestureDetector(this);
 		Gdx.input.setInputProcessor(gd);
-		
+
 		currentView = new SplashView(this);
-		
+
 	}
 
 	@Override

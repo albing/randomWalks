@@ -54,7 +54,7 @@ public class SplashView implements IViewSwitch {
 
 	@Override
 	public boolean touchDown(float x, float y, int pointer, int button) {
-		parent.currentView = new SimulationView(parent);
+		parent.currentView = new OptionsView(parent);
 		return false;
 	}
 

@@ -1,53 +1,166 @@
 package com.laserbaystudios.randomWalks;
 
+import com.badlogic.gdx.ApplicationListener;
 import com.badlogic.gdx.Gdx;
+import com.badlogic.gdx.InputProcessor;
 import com.badlogic.gdx.graphics.GL20;
+import com.badlogic.gdx.graphics.g2d.BitmapFont;
+import com.badlogic.gdx.graphics.g2d.TextureAtlas;
+import com.badlogic.gdx.input.GestureDetector;
 import com.badlogic.gdx.math.Vector2;
+import com.badlogic.gdx.scenes.scene2d.Actor;
 import com.badlogic.gdx.scenes.scene2d.Stage;
+import com.badlogic.gdx.scenes.scene2d.ui.CheckBox;
+import com.badlogic.gdx.scenes.scene2d.ui.Label;
+import com.badlogic.gdx.scenes.scene2d.ui.Skin;
 import com.badlogic.gdx.scenes.scene2d.ui.Slider;
+import com.badlogic.gdx.scenes.scene2d.ui.Table;
+import com.badlogic.gdx.scenes.scene2d.ui.TextButton;
+import com.badlogic.gdx.scenes.scene2d.ui.Window;
+import com.badlogic.gdx.scenes.scene2d.utils.ChangeListener;
 
-/**
- * Created by greg on 6/9/14.
- */
-public class OptionsView implements IViewSwitch {
+public class OptionsView implements IViewSwitch, ApplicationListener {
 
     randomWalks parent;
-    Slider numWalkersSlider;
-    //Window window;
     Stage stage;
+    Skin skin;
+    InputProcessor oldInputProcessor;
+
+    // ApplicationListener
+    @Override
+    public void resume()
+    {
+
+    }
+    @Override
+    public void pause()
+    {
+
+    }
+    @Override
+    public void create()
+    {
+        stage = new Stage();
+        oldInputProcessor = Gdx.input.getInputProcessor();
+        Gdx.input.setInputProcessor(stage);
+
+        skin = new Skin(Gdx.files.internal("uiskin.json"));
+
+        Table table = new Table();
+        table.setFillParent(true);
+
+
+        Window window = new Window("Dialog", skin);
+
+        final Label susceptibleSliderLabel = new Label("Number of susceptible", skin);
+        table.add(susceptibleSliderLabel);
+
+        final Slider numSusceptibleSlider = new Slider(1, 200, 1, false, skin);
+        table.add(numSusceptibleSlider).minWidth(100).fillX().colspan(3);
+
+        final Label numSusceptibleLabel = new Label("1", skin);
+        table.add(numSusceptibleLabel);
+
+
+        table.row();
+
+        final Label infectedSliderLabel = new Label("Number of infected", skin);
+        table.add(infectedSliderLabel);
+
+        final Slider numInfectedSlider = new Slider(1, 200, 1, false, skin);
+        table.add(numInfectedSlider).minWidth(100).fillX().colspan(3);
+
+        final Label numInfectedLabel = new Label("1", skin);
+        table.add(numInfectedLabel);
+
+
+        table.row();
+
+        final CheckBox zombieModeCheckBox = new CheckBox("Random Mode", skin);
+        table.add(zombieModeCheckBox);
+
+        table.row();
+
+        final TextButton startSimulationButton = new TextButton("Release the Zombies!", skin);
+        table.add(startSimulationButton);
+
+
+        stage.addActor(table);
+
+        numSusceptibleSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                numSusceptibleLabel.setText("" + (int) numSusceptibleSlider.getValue());
+            }
+        });
+
+        numInfectedSlider.addListener(new ChangeListener() {
+            @Override
+            public void changed(ChangeEvent event, Actor actor) {
+                numInfectedLabel.setText("" + (int) numInfectedSlider.getValue());
+            }
+        });
+
+        zombieModeCheckBox.addListener(new ChangeListener() {
+            public void changed (ChangeEvent event, Actor actor) {
+                zombieModeCheckBox.setText("Zombie Mode");
+            }
+        });
+
+        startSimulationButton.addListener(new ChangeListener() {
+            public void changed (ChangeEvent event, Actor actor) {
+                startSimulationButton.setText("Beginning...");
+                parent.currentView = new SimulationView(parent, (int)numSusceptibleSlider.getValue(),
+                        (int)numInfectedSlider.getValue(), zombieModeCheckBox.isChecked());
+                Gdx.input.setInputProcessor(oldInputProcessor);
+            }
+        });
+
+
+
+        // TODO: set ALL the options! here
+
+
+    }
+
+    @Override
+    public void resize (int width, int height) {
+        stage.getViewport().update(width, height, true);
+    }
+
+    @Override
+    public void dispose () {
+        stage.dispose();
+        skin.dispose();
+
+        // TODO: is this ever getting called?  set a breakpoint in here...
+    }
+
+
 
     public OptionsView(randomWalks app) {
         parent = app;
 
-        stage = new Stage();
+        if(stage == null)
+            create();
 
-        numWalkersSlider = new Slider(1f, 200f, 1f, false, new Slider.SliderStyle());
-        //window = new Window("Dialog", new Skin());
-        //window.add(numWalkersSlider).minWidth(100).fillX().colspan(3);
     }
 
     @Override
     public void render() {
 
-        Gdx.gl.glClearColor(1, 1, 1, 1);
+        Gdx.gl.glClearColor(.5f, .5f, .5f, 1);
         Gdx.gl.glClear(GL20.GL_COLOR_BUFFER_BIT);
 
-        stage.act();
+        stage.act(Math.min(Gdx.graphics.getDeltaTime(), 1/30f));
         stage.draw();
-
-    }
-
-    @Override
-    public void dispose() {
+        //Table.drawDebug(stage);
 
     }
 
     @Override
     public boolean touchDown(float x, float y, int pointer, int button) {
 
-        // TODO: set ALL the options! here
-
-        parent.currentView = new SimulationView(parent);
 
         return false;
     }

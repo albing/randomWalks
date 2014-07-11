@@ -6,7 +6,7 @@ buildscript {
     }
     dependencies {
         classpath 'de.richsource.gradle.plugins:gwt-gradle-plugin:0.4'
-        classpath 'com.android.tools.build:gradle:0.10+'
+        classpath 'com.android.tools.build:gradle:0.12+'
         classpath 'com.github.jtakakura:gradle-robovm-plugin:0.0.8'
     }
 }
@@ -18,7 +18,7 @@ allprojects {
     version = '1.0'
     ext {
         appName = 'randomWalks2d'
-        gdxVersion = '1.0.1'
+        gdxVersion = '1.2.0'
         roboVMVersion = '0.0.12'
     }
 
